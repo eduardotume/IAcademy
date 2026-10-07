@@ -20,11 +20,10 @@ from datetime import date, datetime
 import pandas as pd
 import PyPDF2
 import streamlit as st
-from audio_recorder_streamlit import audio_recorder
 
 import db
 from exportar import markdown_a_docx
-from ia import GEMINI_MODEL, GEMINI_MODELOS_RESPALDO, HF_MODEL, IAError, generar, ia_disponible, listar_modelos_gemini
+from ia import EN_NAVEGADOR, GEMINI_MODEL, GEMINI_MODELOS_RESPALDO, HF_MODEL, IAError, generar, ia_disponible, listar_modelos_gemini
 
 # =====================================================================
 # Configuración general
@@ -219,9 +218,13 @@ page = st.sidebar.radio("Navegación", PAGINAS, key="pagina")
 st.sidebar.divider()
 st.sidebar.markdown("### ⚙️ Configuración de IA")
 
+if EN_NAVEGADOR:
+    # En la versión web (Vercel) no hay GPU ni servidor: solo Gemini.
+    st.session_state.proveedor = "gemini"
+    st.sidebar.caption("🌐 Versión web · la IA se llama directo desde tu navegador.")
 st.sidebar.radio(
     "Motor de IA",
-    ["gemini", "local"],
+    ["gemini"] if EN_NAVEGADOR else ["gemini", "local"],
     format_func=lambda p: "☁️ Google Gemini (multimodal)" if p == "gemini" else "💻 Modelo local (Hugging Face)",
     key="proveedor",
 )
@@ -693,17 +696,10 @@ elif page == "🎙️ Voz a Texto":
     if st.session_state.proveedor == "local":
         st.warning("El modelo local no procesa audio. Cambia a **Google Gemini** en la barra lateral.")
 
-    st.info("🎤 Haz clic en el micrófono para grabar. Se detiene solo tras 3 segundos de silencio.")
-    audio_bytes = audio_recorder(
-        text="Clic para grabar",
-        recording_color="#7C3AED",
-        neutral_color="#6B7280",
-        icon_size="2x",
-        pause_threshold=3.0,
-    )
+    grabacion = st.audio_input("🎤 Haz clic en el micrófono para grabar y otra vez para detener")
+    audio_bytes = grabacion.getvalue() if grabacion else None
 
     if audio_bytes:
-        st.audio(audio_bytes, format="audio/wav")
         st.success("✅ Audio grabado.")
 
         col1, col2, col3 = st.columns(3)

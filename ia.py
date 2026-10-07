@@ -9,7 +9,14 @@ Por dentro decide qué proveedor usar:
 Así la arquitectura queda abierta: cambiar de modelo no obliga a tocar las páginas.
 """
 
+import base64
+import sys
+
 import streamlit as st
+
+# True cuando la app corre dentro del navegador (stlite / Pyodide), por ejemplo en Vercel.
+EN_NAVEGADOR = sys.platform == "emscripten"
+GEMINI_REST = "https://generativelanguage.googleapis.com/v1beta"
 
 # --- Configuración global del modelo ---
 # Modelo por defecto. Si Google lo retira, solo se cambia aquí (o desde la barra lateral).
@@ -38,23 +45,72 @@ def _cliente_gemini(api_key: str):
     return genai.Client(api_key=api_key)
 
 
+def _filtrar_modelos(pares):
+    nombres = [
+        nombre.replace("models/", "")
+        for nombre, acciones in pares
+        if "generateContent" in (acciones or [])
+    ]
+    nombres = [n for n in nombres if n.startswith("gemini") and "flash" in n]
+    return sorted(set(nombres), reverse=True) or GEMINI_MODELOS_RESPALDO
+
+
 @st.cache_data(ttl=3600, show_spinner=False)
 def listar_modelos_gemini(api_key: str) -> list[str]:
     """Pregunta a Google qué modelos Gemini están disponibles para esta API key."""
+    if EN_NAVEGADOR:
+        try:
+            import requests
+            r = requests.get(f"{GEMINI_REST}/models", headers={"x-goog-api-key": api_key}, params={"pageSize": 200}, timeout=30)
+            r.raise_for_status()
+            return _filtrar_modelos((m.get("name", ""), m.get("supportedGenerationMethods")) for m in r.json().get("models", []))
+        except Exception:
+            return GEMINI_MODELOS_RESPALDO
     try:
         cliente = _cliente_gemini(api_key)
-        nombres = []
-        for m in cliente.models.list():
-            acciones = m.supported_actions or []
-            nombre = (m.name or "").replace("models/", "")
-            if "generateContent" in acciones and nombre.startswith("gemini") and "flash" in nombre:
-                nombres.append(nombre)
-        return sorted(set(nombres), reverse=True) or GEMINI_MODELOS_RESPALDO
+        return _filtrar_modelos((m.name or "", m.supported_actions) for m in cliente.models.list())
     except Exception:
         return GEMINI_MODELOS_RESPALDO
 
 
+def _generar_gemini_rest(api_key, modelo, prompt, archivos, historial, sistema):
+    """Misma llamada a Gemini, pero por la API REST: es lo que funciona dentro del navegador."""
+    import requests
+
+    contenidos = []
+    for msg in historial or []:
+        rol = "user" if msg["role"] == "user" else "model"
+        contenidos.append({"role": rol, "parts": [{"text": msg["content"]}]})
+    partes = [{"text": prompt}]
+    for datos, mime in archivos or []:
+        partes.append({"inlineData": {"mimeType": mime, "data": base64.b64encode(datos).decode()}})
+    contenidos.append({"role": "user", "parts": partes})
+
+    r = requests.post(
+        f"{GEMINI_REST}/models/{modelo}:generateContent",
+        headers={"x-goog-api-key": api_key, "Content-Type": "application/json"},
+        json={"systemInstruction": {"parts": [{"text": sistema}]}, "contents": contenidos},
+        timeout=120,
+    )
+    if r.status_code != 200:
+        try:
+            detalle = r.json().get("error", {})
+            mensaje = f"{r.status_code} {detalle.get('status', '')} {detalle.get('message', '')}"
+        except ValueError:
+            mensaje = f"{r.status_code} {r.text[:200]}"
+        raise RuntimeError(mensaje)
+
+    candidatos = r.json().get("candidates") or []
+    partes_resp = (candidatos[0].get("content") or {}).get("parts", []) if candidatos else []
+    texto = "".join(p.get("text", "") for p in partes_resp)
+    if not texto:
+        raise IAError("Gemini no devolvió texto. Intenta reformular o usar otro archivo.")
+    return texto
+
+
 def _generar_gemini(api_key, modelo, prompt, archivos, historial, sistema):
+    if EN_NAVEGADOR:
+        return _generar_gemini_rest(api_key, modelo, prompt, archivos, historial, sistema)
     from google.genai import types
 
     cliente = _cliente_gemini(api_key)
@@ -124,6 +180,8 @@ def generar(prompt: str, archivos=None, historial=None, sistema: str = SISTEMA_B
     """
     proveedor = st.session_state.get("proveedor", "gemini")
 
+    if proveedor == "local" and EN_NAVEGADOR:
+        raise IAError("El modelo local no funciona en la versión web. Usa Google Gemini.")
     if proveedor == "local":
         if archivos:
             raise IAError(
@@ -142,7 +200,7 @@ def generar(prompt: str, archivos=None, historial=None, sistema: str = SISTEMA_B
         raise
     except Exception as e:
         texto = str(e)
-        if "API_KEY_INVALID" in texto or "API key not valid" in texto:
+        if "API_KEY_INVALID" in texto or "API key not valid" in texto or texto.startswith(("400 INVALID", "403")):
             raise IAError("Tu API Key no es válida. Revísala en Google AI Studio.")
         if "404" in texto or "not found" in texto.lower():
             raise IAError(f"El modelo '{modelo}' no está disponible. Elige otro en la barra lateral.")

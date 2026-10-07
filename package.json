@@ -7,7 +7,10 @@
     "dev": "node scripts/dev.js",
     "start": "node scripts/dev.js",
     "setup": "node scripts/setup.js",
-    "setup:local": "node scripts/setup.js --local"
+    "setup:local": "node scripts/setup.js --local",
+    "build:web": "node scripts/build-web.js",
+    "vercel-build": "node scripts/build-web.js",
+    "web": "node scripts/serve-web.js"
   },
   "engines": {
     "node": ">=18"

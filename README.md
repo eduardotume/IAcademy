@@ -33,10 +33,11 @@ iacademy/
 ├── requirements.txt          # Dependencias principales
 ├── requirements-local.txt    # Opcional: transformers + torch para modelo local
 ├── package.json              # npm run setup / npm run dev
-├── scripts/                  # Lanzadores en Node que encuentran el entorno conda
+├── scripts/                  # npm: dev/setup (entorno conda) y build-web/serve-web (versión web)
 ├── setup_anaconda.bat        # Alternativa de instalación sin npm
 ├── Dockerfile                # Despliegue con Docker (Render, Railway, Fly.io)
 ├── render.yaml               # Despliegue en Render con un clic
+├── vercel.json               # Despliegue en Vercel (versión web con stlite)
 └── .streamlit/
     ├── config.toml           # Tema morado universitario (#7C3AED)
     └── secrets.toml.example  # Plantilla para guardar la API Key
@@ -77,9 +78,23 @@ streamlit run app.py
 
 ## Desplegar en la nube desde GitHub
 
-> Vercel y Netlify **no** sirven para esta app: Streamlit necesita un servidor encendido y conexión en vivo (WebSocket).
+### Opción 1 · Vercel (versión web en el navegador)
 
-### Opción 1 · Streamlit Community Cloud (gratis, recomendado)
+En Vercel la app corre **dentro del navegador** de cada usuario con [stlite](https://github.com/whitphx/stlite) (Python en WebAssembly), porque Vercel no mantiene servidores de Python encendidos.
+
+1. Entra a [vercel.com](https://vercel.com) con GitHub → **Add New… → Project** → importa `eduardotume/IAcademy`.
+2. No cambies nada: `vercel.json` ya indica cómo construirla (`npm run vercel-build` → carpeta `dist/`).
+3. **Deploy**. Cada `git push` a `main` vuelve a publicar.
+
+Diferencias de la versión web:
+- Cada estudiante escribe **su propia API key** en la barra lateral; la llamada a Gemini sale directo de su navegador (no pongas la clave en las variables de Vercel).
+- Cursos, tareas y Pomodoros se guardan en el navegador de cada persona (IndexedDB), no se comparten.
+- Solo motor Gemini: el modelo local de Hugging Face necesita la PC.
+- La primera carga tarda 20–40 s porque instala Python en el navegador.
+
+Para probarla en tu PC antes de subirla: `npm run web` → http://localhost:3000
+
+### Opción 2 · Streamlit Community Cloud (servidor Python, gratis)
 
 1. Entra a [share.streamlit.io](https://share.streamlit.io) con tu cuenta de GitHub.
 2. **Create app** → repositorio `eduardotume/IAcademy`, rama `main`, archivo `app.py`.
@@ -89,7 +104,7 @@ streamlit run app.py
    ```
 4. **Deploy**. Cada `git push` a `main` actualiza la app sola.
 
-### Opción 2 · Render (Docker)
+### Opción 3 · Render (Docker)
 
 1. Entra a [render.com](https://render.com) con GitHub → **New +** → **Blueprint** → elige este repositorio.
 2. Render lee `render.yaml` y te pide `GEMINI_API_KEY`.
