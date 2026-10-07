@@ -1,0 +1,4 @@
+.streamlit/secrets.toml
+iacademy.db
+__pycache__/
+node_modules/

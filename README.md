@@ -32,7 +32,9 @@ iacademy/
 ├── exportar.py               # Exportación a Word
 ├── requirements.txt          # Dependencias principales
 ├── requirements-local.txt    # Opcional: transformers + torch para modelo local
-├── setup_anaconda.bat        # Instalación automática en Windows
+├── package.json              # npm run setup / npm run dev
+├── scripts/                  # Lanzadores en Node que encuentran el entorno conda
+├── setup_anaconda.bat        # Alternativa de instalación sin npm
 └── .streamlit/
     ├── config.toml           # Tema morado universitario (#7C3AED)
     └── secrets.toml.example  # Plantilla para guardar la API Key
@@ -43,31 +45,33 @@ Toda la app llama a una sola función `generar()` en `ia.py`. Por eso se puede c
 - **☁️ Google Gemini** (por defecto): multimodal, usa el SDK `google-genai`. El modelo por defecto está en la constante `GEMINI_MODEL` y la barra lateral muestra los modelos disponibles para tu clave.
 - **💻 Modelo local (Hugging Face)**: corre en tu PC con `transformers`, sin internet ni API Key. Por defecto `Qwen/Qwen2.5-1.5B-Instruct`. Solo texto: voz e imágenes requieren Gemini.
 
-## Instalación con Anaconda (Windows)
+## Inicio rápido (con npm)
 
-1. Abre **Anaconda Prompt** o **Anaconda PowerShell Prompt**.
-2. Ve a la carpeta del proyecto, por ejemplo `cd D:\iacademy\iacademy`.
-3. Ejecuta:
-   ```cmd
-   setup_anaconda.bat
-   ```
-4. (Opcional) Para el modelo local:
-   ```cmd
-   conda activate iacademy
-   pip install -r requirements-local.txt
-   ```
+Requisitos: **Anaconda** y **Node.js 18+** (comprueba con `node -v`).
+
+```bash
+npm run setup     # solo la primera vez: crea el entorno conda "iacademy" e instala todo
+npm run dev       # abre IAcademy en http://localhost:8501
+```
+
+- Funciona desde cualquier terminal (CMD, PowerShell o la de VS Code): no hace falta `conda activate`.
+- `npm run dev` busca solo el entorno `iacademy` de Anaconda/Miniconda y recarga la app cada vez que guardas un archivo.
+- `npm run setup:local` instala además lo necesario para el modelo local de Hugging Face.
+- Puedes pasar opciones a Streamlit: `npm run dev -- --server.port 8502`.
+
+### Alternativa sin npm (Anaconda Prompt)
+
+```cmd
+cd /d D:\iacademy\iacademy
+setup_anaconda.bat
+conda activate iacademy
+streamlit run app.py
+```
 
 ## API Key de Gemini
 
 1. Entra a [Google AI Studio](https://aistudio.google.com/) y genera una API Key.
 2. Pégala en la barra lateral, **o** copia `.streamlit/secrets.toml.example` como `.streamlit/secrets.toml` y escribe tu clave ahí para no ingresarla cada vez.
-
-## Ejecutar
-
-```cmd
-conda activate iacademy
-streamlit run app.py
-```
 
 ## Tecnologías
 

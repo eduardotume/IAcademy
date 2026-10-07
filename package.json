@@ -1,0 +1,15 @@
+{
+  "name": "iacademy",
+  "version": "1.0.0",
+  "private": true,
+  "description": "IAcademy: asistente inteligente para estudiantes universitarios (Streamlit + Gemini)",
+  "scripts": {
+    "dev": "node scripts/dev.js",
+    "start": "node scripts/dev.js",
+    "setup": "node scripts/setup.js",
+    "setup:local": "node scripts/setup.js --local"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
