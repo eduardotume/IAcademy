@@ -11,6 +11,7 @@ Arquitectura:
 
 import io
 import math
+import os
 import struct
 import time
 import wave
@@ -73,7 +74,9 @@ if "iniciado" not in st.session_state:
 
 
 def leer_secreto(clave):
-    """Lee .streamlit/secrets.toml si existe, sin romper la app si no existe."""
+    """Busca la clave en variables de entorno (Render, Docker) o en st.secrets (Streamlit Cloud, secrets.toml)."""
+    if os.environ.get(clave):
+        return os.environ[clave]
     try:
         return st.secrets.get(clave, "")
     except Exception:
@@ -233,7 +236,7 @@ if st.session_state.proveedor == "gemini":
         "Gemini API Key", type="password", value=st.session_state.api_key
     ).strip()
     if clave_secreta:
-        st.sidebar.caption("🔐 Clave cargada desde `.streamlit/secrets.toml`")
+        st.sidebar.caption("🔐 Clave cargada desde la configuración del servidor")
     else:
         st.sidebar.markdown("[Obtener API Key en Google AI Studio](https://aistudio.google.com/)")
 

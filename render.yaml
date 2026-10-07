@@ -1,0 +1,11 @@
+# Despliegue en Render (render.com) desde GitHub: New + > Blueprint > elegir este repositorio.
+services:
+  - type: web
+    name: iacademy
+    runtime: docker
+    plan: free
+    autoDeploy: true
+    healthCheckPath: /_stcore/health
+    envVars:
+      - key: GEMINI_API_KEY
+        sync: false

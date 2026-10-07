@@ -5,11 +5,14 @@ Los datos se guardan en el archivo iacademy.db (junto a app.py),
 así cursos, tareas y sesiones de estudio no se pierden al recargar la página.
 """
 
+import os
 import sqlite3
 from datetime import datetime
 from pathlib import Path
 
-DB_PATH = Path(__file__).parent / "iacademy.db"
+# En la nube se puede apuntar a un disco persistente con la variable IACADEMY_DB_PATH.
+DB_PATH = Path(os.environ.get("IACADEMY_DB_PATH") or Path(__file__).parent / "iacademy.db")
+DB_PATH.parent.mkdir(parents=True, exist_ok=True)
 
 
 def _conectar():

@@ -35,6 +35,8 @@ iacademy/
 ├── package.json              # npm run setup / npm run dev
 ├── scripts/                  # Lanzadores en Node que encuentran el entorno conda
 ├── setup_anaconda.bat        # Alternativa de instalación sin npm
+├── Dockerfile                # Despliegue con Docker (Render, Railway, Fly.io)
+├── render.yaml               # Despliegue en Render con un clic
 └── .streamlit/
     ├── config.toml           # Tema morado universitario (#7C3AED)
     └── secrets.toml.example  # Plantilla para guardar la API Key
@@ -72,6 +74,32 @@ streamlit run app.py
 
 1. Entra a [Google AI Studio](https://aistudio.google.com/) y genera una API Key.
 2. Pégala en la barra lateral, **o** copia `.streamlit/secrets.toml.example` como `.streamlit/secrets.toml` y escribe tu clave ahí para no ingresarla cada vez.
+
+## Desplegar en la nube desde GitHub
+
+> Vercel y Netlify **no** sirven para esta app: Streamlit necesita un servidor encendido y conexión en vivo (WebSocket).
+
+### Opción 1 · Streamlit Community Cloud (gratis, recomendado)
+
+1. Entra a [share.streamlit.io](https://share.streamlit.io) con tu cuenta de GitHub.
+2. **Create app** → repositorio `eduardotume/IAcademy`, rama `main`, archivo `app.py`.
+3. En **Advanced settings** elige Python 3.11 y en **Secrets** pega:
+   ```toml
+   GEMINI_API_KEY = "tu-api-key"
+   ```
+4. **Deploy**. Cada `git push` a `main` actualiza la app sola.
+
+### Opción 2 · Render (Docker)
+
+1. Entra a [render.com](https://render.com) con GitHub → **New +** → **Blueprint** → elige este repositorio.
+2. Render lee `render.yaml` y te pide `GEMINI_API_KEY`.
+3. Cada `git push` a `main` vuelve a desplegar.
+
+### Datos en la nube
+
+La base SQLite vive en el servidor: se comparte entre todos los que usan el link y se borra cuando el servicio se reinicia. Para conservarla en Render, monta un disco persistente y define `IACADEMY_DB_PATH=/data/iacademy.db`.
+
+La API key también se puede pasar como variable de entorno `GEMINI_API_KEY` (Docker, Render, Railway).
 
 ## Tecnologías
 
