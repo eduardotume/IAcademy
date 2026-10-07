@@ -1,18 +1,27 @@
 {
   "name": "iacademy",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "private": true,
-  "description": "IAcademy: asistente inteligente para estudiantes universitarios (Streamlit + Gemini)",
+  "type": "module",
+  "description": "IAcademy: asistente inteligente para estudiantes universitarios con IA generativa multimodal",
   "scripts": {
-    "dev": "node scripts/dev.js",
-    "start": "node scripts/dev.js",
-    "setup": "node scripts/setup.js",
-    "setup:local": "node scripts/setup.js --local",
-    "build:web": "node scripts/build-web.js",
-    "vercel-build": "node scripts/build-web.js",
-    "web": "node scripts/serve-web.js"
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
   },
   "engines": {
     "node": ">=18"
+  },
+  "dependencies": {
+    "docx": "^9.9.0",
+    "pdfjs-dist": "^6.4.299",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "react-markdown": "^10.1.0",
+    "remark-gfm": "^4.0.1"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^6.1.2",
+    "vite": "^8.3.3"
   }
 }

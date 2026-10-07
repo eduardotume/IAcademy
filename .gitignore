@@ -1,6 +1,5 @@
-.streamlit/secrets.toml
-iacademy.db
-__pycache__/
 node_modules/
 dist/
 .vercel/
+.env
+.env.local
